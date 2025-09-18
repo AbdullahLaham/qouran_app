@@ -3,6 +3,10 @@ import React, { useEffect, useState } from 'react'
 import { Redirect, router } from 'expo-router'
 
 import { I18nManager } from 'react-native';
+import { useFonts } from 'expo-font';
+
+
+
 
 
 // import * as Updates from 'expo-updates';

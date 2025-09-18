@@ -10,18 +10,6 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ReemKufi: require("../assets/fonts/ReemKufi-VariableFont_wght.ttf"),
-    AmiriQuran: require("../assets/fonts/AmiriQuran-Regular.ttf"),
-  });
-
-
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

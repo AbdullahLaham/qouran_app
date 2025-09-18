@@ -9,14 +9,24 @@ import { Image } from "expo-image";
 import { icons } from "@/constants";
 import { useFonts } from "expo-font";
 
+import { useLanguageStore } from "@/store/useLanguageStore";
+import DescriptionBox from "../components/DescriptionBox";
+import ToggleModeButton from "../components/ToggleModeButton";
+import SurahView from "../components/SurahView";
 
 
 export default function SurahId() {
 
   const [surah, setSurah] = useState<any>(null);
+  const [prevSurah, setPrevSurah] = useState<any>(null);
+  const [nextSurah, setNextSurah] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
+  const [nloading, setNLoading] = useState(false);
   const [viewState, setViewState] = useState<'joined' | 'splitted'>('joined');
-  const [language, setLanguage] = useState("ar"); // "ar" or "en"
+  // const [language, setLanguage] = useState("ar"); // "ar" or "en"
+
+  const { language, toggleLanguage } = useLanguageStore();
 
 
 
@@ -25,30 +35,47 @@ export default function SurahId() {
   // hooks
   const navigation = useNavigation();
   const { surahId: id } = useLocalSearchParams<any>();
-  console.log(id, 'rrrrrrrrrrrrrrrrrrrrrrrr');
 
   const translateViewX = useRef(new Animated.Value(viewState === "joined" ? 0 : 30)).current;
-  const translateLangX = useRef(new Animated.Value(viewState === "joined" ? 0 : 30)).current;
+  const translateLangX = useRef(new Animated.Value(language === "ar" ? 0 : 32)).current;
+
+    const [loaded] = useFonts({
+    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
+    ReemKufi: require("../../assets/fonts/ReemKufi-VariableFont_wght.ttf"),
+    AmiriQuran: require("../../assets/fonts/AmiriQuran-Regular.ttf"),
+    bismillah: require("../../assets/fonts/bismillah/QCF_Bismillah_COLOR-Regular.ttf"),
+    hafs: require("../../assets/fonts/hafs/uthmanic_hafs_v22.ttf"),
+    mehr: require("../../assets/fonts/mehr/mehr.ttf"),
+  });
+
+
+
 
   const currentId = parseInt(id || "1");
+
+  let mainColor = '#4db6ac';
+
 
   // معلومات عن السور السابقة والتالية
   const prevId = currentId > 1 ? currentId - 1 : null;
   const nextId = currentId < 114 ? currentId + 1 : null;
 
-  const [prevSurah, setPrevSurah] = useState<any>(null);
-  const [nextSurah, setNextSurah] = useState<any>(null);
 
 
 
 
-  const toggleLanguage = () => {
+
+
+
+
+  const changeLanguage = () => {
     const newLang = language === "ar" ? "en" : "ar";
 
-    setLanguage(newLang);
+
+    toggleLanguage(newLang);
 
     Animated.timing(translateLangX, {
-      toValue: newLang === "ar" ? 0 : 33,
+      toValue: newLang === "ar" ? 0 : 32,
       duration: 350,
       useNativeDriver: true,
     }).start();
@@ -68,6 +95,9 @@ export default function SurahId() {
       useNativeDriver: true,
     }).start();
   };
+
+
+
 
   useEffect(() => {
     if (!id) return;
@@ -93,25 +123,42 @@ export default function SurahId() {
     };
 
     fetchSurah();
-    const fetchNeighbor = async (id: number, setFn: any) => {
+
+
+    const fetchNeighbor = async (nid: number, setFn: any) => {
+      setNLoading(true)
       try {
         const res = await fetch(
-          `https://www.askalquran.com/_next/data/iXzNJArydAzbEbs3e5DqK/quran/${id}.json?surahId=${id}`
+          `https://www.askalquran.com/_next/data/iXzNJArydAzbEbs3e5DqK/quran/${nid}.json?surahId=${nid}`
         );
         const data = await res.json();
         setFn(data.pageProps.surah);
-      } catch {}
+      } catch { }
+      finally {
+        setNLoading(false);
+      }
     };
 
     fetchSurah();
+
     if (prevId) fetchNeighbor(prevId, setPrevSurah);
     if (nextId) fetchNeighbor(nextId, setNextSurah);
   }, [id]);
 
+//   useEffect(() => {
+//     console.log(surah, 'sssssssssssssssssssssssssssss');
+//     Animated.timing(translateViewX, {
+//       toValue: language === "en" ? 33 : 0,
+//       duration: 350,
+//       useNativeDriver: true,
+//     }).start();
+  
+// }, []);
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#16a34a" />
+        <ActivityIndicator size="large" color="#4db6ac" />
         <Text className="mt-2 text-gray-500">Loading...</Text>
       </View>
     );
@@ -125,15 +172,22 @@ export default function SurahId() {
     );
   }
 
+  
+  if (!loaded) {
+    // Async font loading only occurs in development.
+    return null;
+  }
+
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-100" style={{ fontFamily: 'AmiriQuran' }}>
       {/* Header */}
 
       <View className="flex flex-row items-center justify-between p-2 ">
 
 
         <TouchableOpacity
-          onPress={toggleLanguage}
+          onPress={changeLanguage}
           className="w-20 h-10  rounded-full flex-row items-center px-1 relative border border-emerald-600"
           activeOpacity={0.8}
         >
@@ -150,51 +204,45 @@ export default function SurahId() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={toggleMode}
-          className="w-20 h-10  rounded-full flex-row items-center px-1 relative border border-emerald-600"
-          activeOpacity={0.8}
-        >
-          {/* النصوص */}
-          <Text className="absolute left-2 text-lg font-bold">📖</Text>
-          <Text className="absolute right-2 text-lg font-bold">🌐</Text>
 
-          {/* الدائرة المتحركة */}
-          <Animated.View
-            className="w-8 h-8 bg-emerald-200/30 rounded-full shadow border border-emerald-600"
-            style={{
-              transform: [{ translateX: translateViewX }],
-            }}
-          />
+
+        <TouchableOpacity onPress={() => router.push('/')} >
+          <Image source={icons.icon} style={{ width: 50, height: 50, borderRadius: 50 }} />
         </TouchableOpacity>
 
-        <Image source={icons.holy} style={{ width: 50, height: 50, borderRadius: 50 }} />
-
       </View>
-      {/* أزرار التنقل */}
-<View className="flex-row justify-between items-center p-4 bg-white border-t border-gray-200">
-  {prevId && prevSurah && (
-    <Pressable
-      onPress={() => router.push(`/surah/${prevId}`)}
-      className="bg-green-600 px-4 py-2 rounded-xl"
-    >
-      <Text className="text-white font-bold">
-        ◀ {prevSurah.name.ar}
-      </Text>
-    </Pressable>
-  )}
 
-  {nextId && nextSurah && (
-    <Pressable
-      onPress={() => router.push(`/surah/${nextId}`)}
-      className="bg-green-600 px-4 py-2 rounded-xl ml-auto"
-    >
-      <Text className="text-white font-bold">
-        {nextSurah.name.ar} ▶
-      </Text>
-    </Pressable>
-  )}
-</View>
+
+
+
+
+
+      {/* أزرار التنقل */}
+      {!nloading && <View className="flex-row justify-between items-center p-4 bg-white border-t border-gray-200">
+        {prevId && prevSurah && (
+          <Pressable
+            onPress={() => router.push(`/surah/${prevId}`)}
+            className="border border-[#4db6ac] px-4 py-2 rounded-xl"
+          >
+            <Text className="font-bold text-[#4db6ac]">
+              ◀◀ {prevSurah.name.ar}
+            </Text>
+          </Pressable>
+        )}
+
+        {nextId && nextSurah && (
+          <Pressable
+            onPress={() => router.push(`/surah/${nextId}`)}
+            className="border border-[#4db6ac] px-4 py-2 rounded-xl ml-auto"
+          >
+            <Text className=" font-bold text-[#4db6ac]">
+              {nextSurah.name.ar} ▶▶
+            </Text>
+          </Pressable>
+        )}
+      </View>
+      }
+
 
 
 
@@ -205,77 +253,14 @@ export default function SurahId() {
 
       <ScrollView>
 
-        {language === "ar" ? (
-          // <View className="p-4 bg-green-600 m-2 rounded-lg">
-          //   <Text className="text-2xl font-bold text-white text-center">
-          //     {surah.name.ar} ({surah.name.transliteration})
-          //   </Text>
-          //   <Text className="text-center text-white mt-1">
-          //     {surah.revelation_place.ar.toUpperCase()}
-          //   </Text>
-          //   <Text className="text-center text-sm text-gray-200 mt-1">
-          //     {surah.verses_count} آية • {surah.words_count} كلمة • {surah.letters_count} حرف
-          //   </Text>
-          // </View>
-          <View className="space-y-2 p-2 bg-green-600 m-2 rounded-lg flex flex-col items-end gap-1" >
-            <Text className="text-3xl mx-auto font-bold text-white text-center mb-2" style={{ writingDirection: "rtl", fontFamily: "ReemKufi", }}>
-              سورة {surah.name.ar} ({surah.name.transliteration})
-            </Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl", fontFamily: "ReemKufi", }} >اسم السورة بالعربي: {surah.name.ar}</Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl" }}>اسم السورة بالإنجليزي: {surah.name.transliteration}</Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl" }}>مكان النزول: {surah.revelation_place.ar}</Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl" }}>آيات: {surah.verses_count}</Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl" }}>عدد الكلمات: {surah.words_count}</Text>
-            <Text className="text-white font-bold" style={{ writingDirection: "rtl" }}>عدد الحروف: {surah.letters_count}</Text>
-          </View>
-        ) : (
-          // <View className="p-4 bg-green-600 m-2 rounded-lg">
-          //   <Text className="text-2xl font-bold text-white text-center">
-          //     {surah.name.en} ({surah.name.transliteration})
-          //   </Text>
-          //   <Text className="text-center text-white mt-1">
-          //     {surah.revelation_place.en.toUpperCase()}
-          //   </Text>
-          //   <Text className="text-center text-sm text-gray-200 mt-1">
-          //     {surah.verses_count} verses • {surah.words_count} words • {surah.letters_count} letters
-          //   </Text>
-          // </View>
-          <View className="space-y-2 bg-green-600 m-2 rounded-lg flex flex-col items-start p-4 gap-1">
-            <Text className="text-3xl mx-auto font-bold text-white text-center mb-2">
-              Surah {surah.name.transliteration}
-            </Text>
-            <Text className="text-white">Surah Name: {surah.name.transliteration}</Text>
-            <Text className="text-white">Meaning: {surah.name.en}</Text>
-            <Text className="text-white">Revelation Place: {surah.revelation_place.en}</Text>
-            <Text className="text-white">Verses: {surah.verses_count}</Text>
-            <Text className="text-white">Word Count: {surah.words_count}</Text>
-            <Text className="text-white">Letter Count: {surah.letters_count}</Text>
-          </View>
-        )}
-        {viewState === "joined" ? (
-          <View className="p-4">
-            <Text className="text-2xl leading-loose text-green-800 font-arabic text-right mx-auto"> بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</Text>
-            <Text className="text-2xl leading-loose text-green-800 font-arabic text-right">
-              {surah.verses
-                .map((v: any) => `${v.text.ar} ﴿${v.number}﴾`)
-                .join(" ")}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={surah.verses}
-            keyExtractor={(item) => item.number.toString()}
-            contentContainerStyle={{ padding: 12 }}
-            renderItem={({ item }) => (
-              <View className="mb-4 p-4 bg-white rounded-xl shadow">
-                <Text className="text-xl font-arabic text-right text-green-800 leading-relaxed">
-                  {item.text.ar} ﴿{item.number}﴾
-                </Text>
-                <Text className="text-gray-600 mt-2">{item.text.en}</Text>
-              </View>
-            )}
-          />
-        )}
+       <DescriptionBox surah={surah} language={language} mainColor={mainColor} />
+
+
+      <ToggleModeButton translateViewX={translateViewX} toggleMode={toggleMode} />
+      <SurahView viewState={viewState} surah={surah} />
+
+
+        
 
 
       </ScrollView>
