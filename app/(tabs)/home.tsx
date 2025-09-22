@@ -75,7 +75,7 @@
 // });
 
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Animated, Alert } from "react-native";
 import IconAlnuzul from '@/app/components/IconAlnuzul';
 import { Image } from "expo-image";
 import { icons } from "@/constants";
@@ -113,6 +113,10 @@ export default function Home() {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching surahs:", error);
+        if (error.code === "ERR_NETWORK" || error.message.includes("Network Error")) {
+        Alert.alert("خطأ في الاتصال", "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.");
+        return; // لا نسجل خروج المستخدم
+      }
       } finally {
         setLoading(false);
         }
@@ -192,7 +196,7 @@ export default function Home() {
       </View>
       {/* the title */}
 
-      <Text className="text-3xl font-bold text-center mx-auto pb-2" style={{fontFamily: ""}}>{language == 'en' ? "Holy Quran Surahs Index" : "فهرس سور القرآن الكريم"}</Text>
+      <Text className="text-3xl font-bold text-center mx-auto pb-2" style={{fontFamily: "Cairo"}}>{language == 'en' ? "Holy Quran Surahs Index" : "فهرس سور القرآن الكريم"}</Text>
 
       {/* عرض السور */}
 
@@ -205,11 +209,11 @@ export default function Home() {
           <TouchableOpacity onPress={() => router.push(`/surah/${item?.number}`)}>
             <View className="py-3 border-b border-gray-300 bg-white my-2 border   px-3  shadow rounded-md ">
             {language === "ar" ? (
-              <Text className="text-lg font-bold  rounded ml-auto" style={{fontFamily: "Cairo"}}>
+              <Text className="text-xl font-bold  rounded ml-auto" style={{fontFamily: "Cairo"}}>
                {item?.number} - {item.name.ar} 
             </Text>
             ) : (
-              <Text className="text-lg font-bold  rounded " style={{fontFamily: "Cairo"}}>
+              <Text className="text-xl font-bold  rounded " style={{fontFamily: "Cairo"}}>
                {item?.number} - {item.name.transliteration}
             </Text>
             )}

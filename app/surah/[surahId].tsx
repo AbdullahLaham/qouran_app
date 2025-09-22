@@ -1,7 +1,7 @@
 // app/surah/[id].tsx
 
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Animated, ScrollView, Pressable } from "react-native";
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Animated, ScrollView, Pressable, Alert } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +13,7 @@ import { useLanguageStore } from "@/store/useLanguageStore";
 import DescriptionBox from "../components/DescriptionBox";
 import ToggleModeButton from "../components/ToggleModeButton";
 import SurahView from "../components/SurahView";
+import NavigationButtons from "../components/NavigationButton";
 
 
 export default function SurahId() {
@@ -40,9 +41,9 @@ export default function SurahId() {
   const translateLangX = useRef(new Animated.Value(language === "ar" ? 0 : 32)).current;
 
     const [loaded] = useFonts({
-    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
-    ReemKufi: require("../../assets/fonts/ReemKufi-VariableFont_wght.ttf"),
-    AmiriQuran: require("../../assets/fonts/AmiriQuran-Regular.ttf"),
+    // SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
+    // ReemKufi: require("../../assets/fonts/ReemKufi-VariableFont_wght.ttf"),
+    // AmiriQuran: require("../../assets/fonts/AmiriQuran-Regular.ttf"),
     bismillah: require("../../assets/fonts/bismillah/QCF_Bismillah_COLOR-Regular.ttf"),
     hafs: require("../../assets/fonts/hafs/uthmanic_hafs_v22.ttf"),
     mehr: require("../../assets/fonts/mehr/mehr.ttf"),
@@ -117,6 +118,10 @@ export default function SurahId() {
       } catch (error) {
         setLoading(false);
         console.error(error);
+        if (error.code === "ERR_NETWORK" || error.message.includes("Network Error")) {
+        Alert.alert("خطأ في الاتصال", "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.");
+        return; // لا نسجل خروج المستخدم
+      }
       } finally {
         setLoading(false);
       }
@@ -180,7 +185,7 @@ export default function SurahId() {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100" style={{ fontFamily: 'AmiriQuran' }}>
+    <SafeAreaView className="flex-1 bg-gray-100">
       {/* Header */}
 
       <View className="flex flex-row items-center justify-between p-2 ">
@@ -191,11 +196,9 @@ export default function SurahId() {
           className="w-20 h-10  rounded-full flex-row items-center px-1 relative border border-emerald-600"
           activeOpacity={0.8}
         >
-          {/* النصوص */}
           <Text className="absolute left-3 text-xs font-bold">AR</Text>
           <Text className="absolute right-3 text-xs font-bold">EN</Text>
 
-          {/* الدائرة المتحركة */}
           <Animated.View
             className="w-8 h-8 bg-emerald-200/30 rounded-full shadow border border-emerald-600"
             style={{
@@ -214,55 +217,16 @@ export default function SurahId() {
 
 
 
-
-
-
-      {/* أزرار التنقل */}
-      {!nloading && <View className="flex-row justify-between items-center p-4 bg-white border-t border-gray-200">
-        {prevId && prevSurah && (
-          <Pressable
-            onPress={() => router.push(`/surah/${prevId}`)}
-            className="border border-[#4db6ac] px-4 py-2 rounded-xl"
-          >
-            <Text className="font-bold text-[#4db6ac]">
-              ◀◀ {prevSurah.name.ar}
-            </Text>
-          </Pressable>
-        )}
-
-        {nextId && nextSurah && (
-          <Pressable
-            onPress={() => router.push(`/surah/${nextId}`)}
-            className="border border-[#4db6ac] px-4 py-2 rounded-xl ml-auto"
-          >
-            <Text className=" font-bold text-[#4db6ac]">
-              {nextSurah.name.ar} ▶▶
-            </Text>
-          </Pressable>
-        )}
-      </View>
-      }
-
-
-
-
-
-
+     
       {/* Verses */}
-
-
       <ScrollView>
+        <DescriptionBox surah={surah} language={language} mainColor={mainColor} />
+         {/* أزرار التنقل */}
+            
+        <NavigationButtons prevId={prevId} prevSurah={prevSurah} nextId={nextId} nextSurah={nextSurah} language={language} nloading={nloading} />
 
-       <DescriptionBox surah={surah} language={language} mainColor={mainColor} />
-
-
-      <ToggleModeButton translateViewX={translateViewX} toggleMode={toggleMode} />
-      <SurahView viewState={viewState} surah={surah} />
-
-
-        
-
-
+        <ToggleModeButton translateViewX={translateViewX} toggleMode={toggleMode} />
+        <SurahView viewState={viewState} surah={surah} />
       </ScrollView>
 
     </SafeAreaView>
